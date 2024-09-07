@@ -1,1 +1,1 @@
-worker: python selman-bot.py
+worker: python selman_bot.py
