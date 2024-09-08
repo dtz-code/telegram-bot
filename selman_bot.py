@@ -2,11 +2,10 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from datetime import timedelta
 import asyncio
-import os
 
-# Load bot token and password from environment variables
-BOT_TOKEN = os.getenv('7361438445:AAFDVYpvpvCs2vgY4yCCkx3eam0Q3ODIT-o')  # Replace with your actual bot token
-PASSWORD = os.getenv('selmanBOT123321')  # Replace with your actual password
+# Set bot token and password directly in the code
+BOT_TOKEN = '7361438445:AAFDVYpvpvCs2vgY4yCCkx3eam0Q3ODIT-o'  # Replace with your actual bot token
+PASSWORD = 'selmanBOT123321'  # Replace with your actual password
 
 # Variables to store bot settings
 message_text = "Hello, this is an automated message!"
@@ -101,12 +100,16 @@ async def set_interval(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def send_message(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.data  # Use the passed chat ID from the scheduled job
-    if image_file_id:
-        # Send the image if an image file ID is set
-        await context.bot.send_photo(chat_id=chat_id, photo=image_file_id, caption=message_text)
-    else:
-        # Send only the message if no image file ID is set
-        await context.bot.send_message(chat_id=chat_id, text=message_text)
+    try:
+        if image_file_id:
+            # Send the image if an image file ID is set
+            await context.bot.send_photo(chat_id=chat_id, photo=image_file_id, caption=message_text)
+        else:
+            # Send only the message if no image file ID is set
+            await context.bot.send_message(chat_id=chat_id, text=message_text)
+    except Exception as e:
+        # Log error and continue
+        print(f"Error sending message: {e}")
 
 async def schedule_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await check_authorization(update):
@@ -120,10 +123,13 @@ async def schedule_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         job.schedule_removal()
 
     # Send the first message immediately
-    if image_file_id:
-        await context.bot.send_photo(chat_id=chat_id, photo=image_file_id, caption=message_text)
-    else:
-        await context.bot.send_message(chat_id=chat_id, text=message_text)
+    try:
+        if image_file_id:
+            await context.bot.send_photo(chat_id=chat_id, photo=image_file_id, caption=message_text)
+        else:
+            await context.bot.send_message(chat_id=chat_id, text=message_text)
+    except Exception as e:
+        print(f"Error sending initial message: {e}")
 
     # Schedule the message sending at the defined interval
     context.job_queue.run_repeating(send_message, interval=timedelta(minutes=interval), data=chat_id, name=str(chat_id))
