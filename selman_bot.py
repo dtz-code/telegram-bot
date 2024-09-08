@@ -12,8 +12,15 @@ message_text = "Hello, this is an automated message!"
 image_file_id = None  # Variable to store the image file ID
 interval = 5  # Default interval in minutes
 authorized_user_id = None  # Store the ID of the user who is authorized
+bot_owner_id = None  # The bot owner's user ID
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global bot_owner_id
+
+    # Set the bot owner's ID when the bot is started for the first time
+    if bot_owner_id is None:
+        bot_owner_id = update.message.from_user.id
+
     # Display inline keyboard to enter password
     keyboard = [[InlineKeyboardButton("Enter Password", callback_data='enter_password')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -31,7 +38,7 @@ async def enter_password_callback(update: Update, context: ContextTypes.DEFAULT_
     await query.message.reply_text('Please enter your password in this private chat using the format /password <your_password>.')
 
 async def password(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global authorized_user_id
+    global authorized_user_id, bot_owner_id
 
     # Ensure the password is entered in a private chat
     if update.message.chat.type != 'private':
@@ -48,9 +55,10 @@ async def password(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text('Incorrect password. Please try again.')
 
 async def check_authorization(update: Update):
-    global authorized_user_id
-    if update.message.from_user.id != authorized_user_id:
-        await update.message.reply_text('You are not authorized to use this command. Please enter the correct password in a private chat using /password.')
+    global authorized_user_id, bot_owner_id
+    user_id = update.message.from_user.id
+    if user_id != authorized_user_id and user_id != bot_owner_id:
+        await update.message.reply_text('You are not authorized to use this command. Only the authorized user or the bot owner can perform actions.')
         return False
     return True
 
