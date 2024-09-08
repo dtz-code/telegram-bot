@@ -4,21 +4,41 @@ from datetime import timedelta
 import asyncio
 
 BOT_TOKEN = '7361438445:AAFDVYpvpvCs2vgY4yCCkx3eam0Q3ODIT-o'  # Replace with your actual bot token
+PASSWORD = 'selmanBOT123321'  # Replace with your actual password
 
 message_text = "Hello, this is an automated message!"
 image_file_id = None  # Variable to store the image file ID
 interval = 5  # Default interval in minutes
+authorized_user_id = None  # Store the ID of the user who is authorized
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Ask for the password
     await update.message.reply_text(
-        'Hello! Welcome to your automated bot. '
-        'Use /set_message <your message> or send a message with an image or attachment '
-        'to set the message that should be sent automatically. '
-        'Use /set_interval <minutes> to set the interval, '
-        'and /schedule_message to start sending messages.'
+        'Welcome to the automated bot. Please enter the password using the command /password <your_password>.'
     )
 
+async def password(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global authorized_user_id
+    # Get the entered password
+    if len(context.args) > 0 and context.args[0] == PASSWORD:
+        authorized_user_id = update.message.from_user.id
+        await update.message.reply_text(
+            'Password accepted. You are now authorized to use the bot commands.'
+        )
+    else:
+        await update.message.reply_text('Incorrect password. Please try again.')
+
+async def check_authorization(update: Update):
+    global authorized_user_id
+    if update.message.from_user.id != authorized_user_id:
+        await update.message.reply_text('You are not authorized to use this command. Please enter the correct password using /password.')
+        return False
+    return True
+
 async def set_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await check_authorization(update):
+        return
+
     global message_text, image_file_id
 
     # Only store the text after the command, removing the command itself
@@ -31,6 +51,9 @@ async def set_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f'New message set: "{message_text}"')
 
 async def handle_media_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await check_authorization(update):
+        return
+
     global message_text, image_file_id
     # Extract only the caption without the '/set_message' command
     if update.message.caption and update.message.caption.startswith('/set_message'):
@@ -46,6 +69,9 @@ async def handle_media_message(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text('No image found. Please send an image to save it.')
 
 async def set_interval(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await check_authorization(update):
+        return
+
     global interval
     try:
         interval = int(context.args[0])
@@ -63,6 +89,9 @@ async def send_message(context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=chat_id, text=message_text)
 
 async def schedule_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await check_authorization(update):
+        return
+
     chat_id = update.effective_chat.id
 
     # Remove all existing scheduled jobs for this group
@@ -81,6 +110,9 @@ async def schedule_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f'Automated messages scheduled every {interval} minutes.')
 
 async def stop_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await check_authorization(update):
+        return
+
     chat_id = update.effective_chat.id
 
     # Remove all scheduled jobs for this group
@@ -97,6 +129,7 @@ async def main():
     application = ApplicationBuilder().token(BOT_TOKEN).post_init(lambda app: app.job_queue).build()
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("password", password))
     application.add_handler(CommandHandler("set_message", set_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_media_message))  # Filter for photos
     application.add_handler(CommandHandler("set_interval", set_interval))
