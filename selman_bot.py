@@ -1,10 +1,11 @@
+
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from datetime import timedelta
 import asyncio
 
 # Set bot token
-BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'  # Replace with your actual bot token
+BOT_TOKEN = '7361438445:AAFDVYpvpvCs2vgY4yCCkx3eam0Q3ODIT-o'  # Replace with your actual bot token
 
 # Variables to store bot settings
 message_text = "Hello, this is an automated message!"
