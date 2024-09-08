@@ -171,13 +171,8 @@ async def main():
     application.add_handler(CommandHandler("schedule_message", schedule_message))
     application.add_handler(CommandHandler("stop_message", stop_message))
 
-    # Start the application and polling loop
-    await application.initialize()
-    await application.start()
-    await application.job_queue.start()
-    print("Bot is now running...")
-    await application.updater.start_polling()
-    await application.idle()  # Keeps the bot running until manually stopped
+    # Run the application with polling
+    await application.run_polling()
 
 if __name__ == '__main__':
     # Use the already running event loop
