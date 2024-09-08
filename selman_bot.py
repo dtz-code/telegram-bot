@@ -175,7 +175,5 @@ async def main():
     await application.run_polling()
 
 if __name__ == '__main__':
-    # Use the already running event loop
-    loop = asyncio.get_event_loop()
-    loop.create_task(main())
-    loop.run_forever()
+    # Use asyncio.run() to execute the main coroutine
+    asyncio.run(main())
